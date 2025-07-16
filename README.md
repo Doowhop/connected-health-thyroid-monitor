@@ -4,7 +4,7 @@ A Python-based simulation of a real-time thyroid health monitoring system that i
 ## Technologies Used
 
 - **Python 3.9+** — Core programming language  
-- **cryptography (Fernet)** — Symmetric encryption for securing data  
+- **cryptography** — Symmetric encryption for securing data  
 - **hashlib** — Secure password hashing  
 - **getpass** — Secure password input without echo  
 - **random, time** — Simulated data generation and realistic timing  
