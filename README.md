@@ -68,6 +68,7 @@ For real-world use, extensive security, validation, and UI improvements would be
 Molly Richardson
 July 2025
 
+You can view the full project repository here:  
 
 
    
