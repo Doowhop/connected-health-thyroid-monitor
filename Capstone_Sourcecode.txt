@@ -1,0 +1,274 @@
+"""
+Connected Health: Thyroid Monitoring Application
+Simulated patient-facing app for secure collection and evaluation of thyroid-related health metrics
+Author: Molly Richardson | July 2025
+
+"""
+# Python Libraries
+import random
+import time
+import hashlib
+import getpass
+from cryptography.fernet import Fernet
+
+# Generate encryption key and initialize cipher
+encryption_key = Fernet.generate_key()
+cipher_suite = Fernet(encryption_key)
+
+# Hardcoded user credentials with a hashed password
+user_credentials = {
+    "admin": hashlib.sha256("password123".encode()).hexdigest() # User Credentials
+}
+
+# Storage for user-specific calibration data
+user_baseline = {}
+
+# ---------------------- AUTHENTICATION & SECURITY ---------------------- #
+
+def authenticate_user():
+# Prompt the user to log in with their credentials
+    print("\n🔐 User Authentication Required")
+
+# Get the username from the user input
+    username = input("Username: ") 
+
+# Securely prompt for the password without echoing input to the screen
+    password = getpass.getpass("Password: ")
+
+# Check if the entered username exists in the stored credentials
+    if username in user_credentials:
+
+    # Hash the entered password using SHA-256 for secure comparison
+        hashed_input = hashlib.sha256(password.encode()).hexdigest()
+    
+# Compare the hashed input password with the stored hashed password
+        if hashed_input == user_credentials[username]:
+            print("✅ Access granted.\n")
+            return True # Authentication successful
+
+# If username not found or password mismatch, deny access
+    print("❌ Access denied. Invalid credentials.\n")
+    return False
+
+def encrypt_data(data_dict):
+    # Convert the data dictionary to a string, then encode to bytes
+    raw = str(data_dict).encode()
+    # Encrypt the byte-encoded string using Fernet symmetric encryption
+    return cipher_suite.encrypt(raw)
+
+def decrypt_data(encrypted_data):
+    # Decrypt the encrypted bytes back to the original byte string
+    decrypted = cipher_suite.decrypt(encrypted_data)
+    # Decode bytes back to string and evaluate to reconstruct original dictionary
+    # ⚠️ Warning: Using eval() is insecure and should be avoided in production code
+    return eval(decrypted.decode())  # ⚠️ Not secure for real-world use
+
+# ---------------------- BLUETOOTH AND PCP CONNECTION PLACEHOLDER FUNCTIONS ---------------------- #
+
+def bluetooth_settings():
+    # Display the Bluetooth settings menu options
+    print("\n📶 Bluetooth Settings:")
+    print(" - Enable/Disable Bluetooth")
+    print(" - Pair with device")
+    print(" - Manage known devices\n")
+
+def connect_with_pcp():
+    # Simulate connecting to the user's Primary Care Physician (PCP)
+    print("\n📞 Connecting with your Primary Care Physician. Please wait a moment...")
+    print("Simulated: Appointment request or secure message sent.\n")
+
+# ---------------------- MAIN FEATURES ---------------------- #
+
+def manual_input_data():
+    # Prompt the user to manually enter health data values
+    print("\n📝 Manual Health Data Entry")
+    try:
+        return {
+            "TSH": float(input("Enter TSH (mIU/L): ")), # Thyroid Stimulating Hormone level
+            "T3": float(input("Enter T3 (ng/dL): ")), # Triiodothyronine hormone level
+            "T4": float(input("Enter T4 (ng/dL): ")), # Thyroxine hormone level
+            "heartRate": float(input("Enter Heart Rate (bpm): ")), # Heart rate in beats per minute
+         
+        }
+    except ValueError:
+        # Handle non-numeric input errors gracefully
+        print("❌ Invalid input. Please enter numeric values.")
+        return None
+
+def calibrate_user():
+    # Inform the user calibration is starting and instruct to stay still
+    print("\n⚙️ Calibration is in Progress. Please stay still and relaxed to gather an accurate reading.")
+    readings = []
+
+    # Collect 5 simulated readings with random values within typical baseline ranges
+    for i in range(5):
+        print(f"🩺 Reading {i+1} of 5...")
+        reading = {
+            "TSH": round(random.uniform(0.8, 3.5), 2),
+            "T3": round(random.uniform(2.3, 3.9), 2),
+            "T4": round(random.uniform(1.0, 1.7), 2),
+            "heartRate": round(random.uniform(65, 75), 0),
+            
+        }
+        readings.append(reading)
+        time.sleep(1) # Pause for realism between readings
+
+    # Calculate the average baseline values across the 5 readings
+    global user_baseline
+    user_baseline = {key: round(sum(r[key] for r in readings) / len(readings), 2) for key in readings[0]}
+
+    print("\n✅ Calibration Is Complete. Baseline Reading Stored:")
+    print(user_baseline, "\n")
+
+def scan_and_collect_data():
+    # Simulate searching and connecting to a wearable device
+    print("\n🔍 Searching for Wearable Device...")
+    if True:  # Simulated successful connection
+        print("✅ Device Found. Collecting Data...\n")
+ # Return simulated sensor data with typical possible ranges
+        return {
+            "TSH": round(random.uniform(0.5, 5.0), 2),
+            "T3": round(random.uniform(1.0, 4.0), 2),
+            "T4": round(random.uniform(0.8, 1.8), 2),
+            "heartRate": round(random.uniform(60, 100), 0),
+            
+        }
+    return None
+
+def analyze_data(data):
+    alerts = []
+
+    # TSH evaluation
+    if data["TSH"] > 4.5 or data["TSH"] < 0.4:
+        alerts.append(("TSH", data["TSH"], "RED", "TSH is outside the normal range."))
+    elif 0.4 <= data["TSH"] <= 0.6:
+        alerts.append(("TSH", data["TSH"], "YELLOW", "TSH is within normal range."))
+
+    # T3 evaluation
+    if data["T3"] > 4.0 or data["T3"] < 2.2:
+        alerts.append(("T3", data["T3"], "RED", "T3 is outside the normal range."))
+    elif 2.2 <= data["T3"] <= 2.3:
+        alerts.append(("T3", data["T3"], "YELLOW", "T3 is approaching abnormal range."))
+
+    # T4 evaluation
+    if data["T4"] > 1.8 or data["T4"] < 0.8:
+        alerts.append(("T4", data["T4"], "RED", "T4 is outside the normal range."))
+    elif 0.8 <= data["T4"] <= 0.9:
+        alerts.append(("T4", data["T4"], "YELLOW", "T4 is approaching abnormal range."))
+
+    # Heart rate evaluation
+    if data["heartRate"] > 100:
+        alerts.append((
+            "Heart Rate", data["heartRate"], "RED",
+            "Abnormal heart rate detected. Please contact your primary care provider promptly. "
+            "If you experience symptoms such as chest pain, dizziness, or shortness of breath, call 911 immediately."
+        ))
+    elif data["heartRate"] > 95 or data["heartRate"] < 65:
+        alerts.append(("Heart Rate", data["heartRate"], "YELLOW", "Heart rate near abnormal range."))
+
+    return alerts
+# ---------------------- HEALTH SUMMARY DASHBOARD ---------------------- #
+
+def view_current_data(latest_encrypted_data):
+    # Display the header for the health summary section
+    print("\n🩺 View Health Summary")
+
+    # Check if any health data has been collected or stored yet
+    if latest_encrypted_data is None:
+        print("⚠️ No health data found.\n")  # Inform the user there is no data to display
+        return # Exit the function early since there's nothing to show
+
+    try:
+        # Attempt to decrypt the latest encrypted health data
+        decrypted = decrypt_data(latest_encrypted_data)
+
+        # Display the decrypted health metrics in a readable format
+        print("\n🧾 Latest Health Metrics:")
+        for k, v in decrypted.items():
+            print(f" - {k}: {v}") # Print each metric and its value
+        print()
+    except Exception as e:
+        # Catch and report any errors that occur during decryption
+        print(f"❌ Could not decrypt user data: {e}\n")
+
+# ---------------------- MAIN PROGRAM LOOP (Dropdown Menu) ---------------------- #
+
+def main():
+    # Welcome message when app starts
+    print("\n📱 Welcome to the Connected Health App\n")
+
+    # Authenticate user before allowing access to the app features
+    if not authenticate_user():
+        return # Exit if authentication fails
+
+    # Initialize variable to store the latest encrypted health data
+    latest_encrypted_data = None
+
+    # Main program loop for user interaction
+    while True:
+        # Display menu options for the user
+        print("Choose an option:")
+        print("1️⃣  Scan and collect data")
+        print("2️⃣  Calibrate for baseline")
+        print("3️⃣  Enter data manually")
+        print("4️⃣  Bluetooth settings")
+        print("5️⃣  Connect with PCP")
+        print("6️⃣  View Health Summary")
+        print("7️⃣  Exit\n")
+
+        # Prompt user for choice input
+        choice = input("Enter your choice (1-7): ")
+
+        # Execute functionality based on user selection
+        if choice == '1':
+            data = scan_and_collect_data()
+        elif choice == '2':
+            calibrate_user()
+            continue # Skip remaining loop steps and show menu again
+        elif choice == '3':
+            data = manual_input_data()
+        elif choice == '4':
+            bluetooth_settings()
+            continue
+        elif choice == '5':
+            connect_with_pcp()
+            continue
+        elif choice == '6':
+            view_current_data(latest_encrypted_data)
+            continue
+        elif choice == '7':
+            print("👋 Exiting the app. Thank you for using Connected Health. Stay healthy!")
+            break # Exit the loop and terminate the program
+        else:
+            print("❌ Invalid selection.\n")
+            continue
+
+        # If data was collected (via scan or manual input), process it
+        if data:
+            # Encrypt the new data before storing or transmission
+            encrypted = encrypt_data(data)
+            latest_encrypted_data = encrypted
+
+            # Show encrypted data (for demonstration/debugging)
+            print(f"\n🔒 Encrypted Data: {encrypted}")
+
+            # Decrypt immediately for preview and analysis
+            decrypted_data = decrypt_data(encrypted)
+            print(f"\n✅ Decrypted Data Preview:\n{decrypted_data}\n")
+
+            # Analyze health metrics and collect any alerts
+            alerts = analyze_data(decrypted_data)
+
+            # Display alerts if any were triggered
+            if alerts:
+                print("⚠️ ALERT SUMMARY:")
+                for metric, value, level, message in alerts:
+                    icon = "🔴" if level == "RED" else "🟡"
+                    print(f"{icon} {metric}: {value} ({message})")
+                print("❗ Recommendation: RED alerts suggest consulting a healthcare provider.\n")
+            else:
+                print("✅ All metrics are within safe ranges.\n")
+
+# Run the app only if this script is executed directly (not imported)
+if __name__ == "__main__":
+    main()
